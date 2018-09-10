@@ -1,0 +1,70 @@
+private class GetStories extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            srlImages.setRefreshing(true);
+        }
+
+        @Override
+        protected Void doInBackground(Void... voids) {
+            storiesList = new ArrayList<>();
+            Comman.errorLog(mContext, "PATH", Comman.STATUS_PATH);
+            File fileDir = new File(Comman.STATUS_PATH);
+            if (!fileDir.exists() || !fileDir.isDirectory()) {
+                return null;
+            }
+
+            File fileslist[] = fileDir.listFiles();
+
+            Arrays.sort(fileslist, new Comparator<File>() {
+                public int compare(File f1, File f2) {
+                    return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+                }
+            });
+
+            if (fileslist.length <= 0)
+                return null;
+
+
+            Story story;
+            for (int i = 0; i < fileslist.length; i++) {
+                File file = new File(Comman.STATUS_PATH + fileslist[i].getName());
+                int file_size = Integer.parseInt(String.valueOf(file.length() / 1024));
+                if (file_size > 0) {
+                    story = new Story();
+                    story.setFileName(Comman.STATUS_PATH + fileslist[i].getName());
+
+                    if (story.getFileName().endsWith(".mp4")) {
+                        story.setVideo(true);
+                    } else {
+                        story.setVideo(false);
+                    }
+                    Comman.errorLog(mContext, "FILE[" + i + "]", story.getFileName());
+                    storiesList.add(story);
+                }
+            }
+            return null;
+        }
+
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            if (srlImages.isRefreshing())
+                srlImages.setRefreshing(false);
+
+            Comman.errorLog(mContext, "LEN", storiesList.size() + "");
+
+            if (storiesList != null && storiesList.size() > 0) {
+                rvImages.setVisibility(View.VISIBLE);
+                llError.setVisibility(View.GONE);
+                mAdapter = new StoryRecyclerAdapter(mContext, fragment, storiesList);
+                rvImages.setAdapter(mAdapter);
+            } else {
+                rvImages.setVisibility(View.GONE);
+                llError.setVisibility(View.VISIBLE);
+                tvError.setText(Html.fromHtml("No Stories found!!!<br/>Swipe down to Refresh"));
+            }
+        }
+    }
